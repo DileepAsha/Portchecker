@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b1020">
+  <title>PortScope — TCP Port Checker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <div class="ambient ambient-one"></div><div class="ambient ambient-two"></div>
+  <header class="topbar shell">
+    <a class="brand" href="/" aria-label="PortScope home">
+      <span class="brand-mark"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M7 16h18M16 7v18"/><circle cx="16" cy="16" r="11"/></svg></span>
+      <span>Port<span class="brand-light">Scope</span></span>
+    </a>
+    <div class="top-meta"><span class="live-dot"></span> TCP NETWORK TOOL <span class="meta-divider">/</span> v1.0</div>
+  </header>
+
+  <main class="shell">
+    <section class="hero">
+      <div class="eyebrow"><span class="eyebrow-line"></span> SIMPLE. FAST. CLEAR.</div>
+      <h1>Know what’s<br><span>open.</span></h1>
+      <p class="hero-copy">Check whether a TCP port is reachable on a host. Get a clear result, response time, and a little more confidence in your troubleshooting.</p>
+    </section>
+
+    <section class="workspace">
+      <div class="panel checker-panel">
+        <div class="panel-heading">
+          <div><div class="section-kicker">CONNECTION TEST</div><h2>Run a port check</h2></div>
+          <span class="shield-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 19 6v5c0 4.7-3 8-7 10-4-2-7-5.3-7-10V6l7-3Z"/><path d="m9 12 2 2 4-4"/></svg></span>
+        </div>
+        <form method="post" class="check-form" id="checkForm">
+          <label for="host">HOSTNAME OR IP ADDRESS</label>
+          <div class="input-wrap"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a15 15 0 0 1 0 18M12 3a15 15 0 0 0 0 18"/></svg><input id="host" name="host" value="{{ host }}" placeholder="example.com or 192.168.1.1" autocomplete="url" required maxlength="253"></div>
+          <div class="field-row">
+            <div class="port-field">
+              <label for="port">PORT NUMBER</label>
+              <div class="input-wrap"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/><circle cx="8" cy="7" r="1.5"/><circle cx="15" cy="12" r="1.5"/><circle cx="10" cy="17" r="1.5"/></svg><input id="port" name="port" type="number" min="1" max="65535" value="{{ port or '443' }}" placeholder="443" required></div>
+            </div>
+            <div class="service-field">
+              <label>COMMON SERVICE</label>
+              <div class="select-wrap"><select id="serviceSelect" aria-label="Choose a common service">
+                <option value="">Choose a service</option>
+                {% for p, name in common_ports.items() %}
+                <option value="{{ p }}">{{ p }} · {{ name }}</option>
+                {% endfor %}
+              </select><span class="select-chevron">⌄</span></div>
+            </div>
+          </div>
+          {% if error %}<div class="alert error-alert"><span>!</span>{{ error }}</div>{% endif %}
+          <button class="primary-button" type="submit" id="submitButton"><span class="button-label">Check port</span><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
+          <p class="form-footnote"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 20 7v5c0 4-3.4 7.3-8 9-4.6-1.7-8-5-8-9V7l8-4Z"/></svg> Only test hosts and networks you own or have permission to assess.</p>
+        </form>
+      </div>
+
+      <aside class="side-column">
+        <div class="panel info-panel">
+          <div class="section-kicker">HOW IT WORKS</div>
+          <div class="step"><span class="step-number">01</span><div><h3>Enter a destination</h3><p>Use a domain name or an IP address.</p></div></div>
+          <div class="step"><span class="step-number">02</span><div><h3>Choose a TCP port</h3><p>Pick a common service or enter a custom port.</p></div></div>
+          <div class="step"><span class="step-number">03</span><div><h3>Read the result</h3><p>See whether the connection was accepted, refused, or timed out.</p></div></div>
+        </div>
+        <div class="tip-card"><span class="tip-icon">✳</span><div><strong>Quick tip</strong><p>A port can be reachable from one network and blocked from another. Test from the network that matters.</p></div></div>
+      </aside>
+    </section>
+
+    {% if result %}
+    <section class="result-panel panel" aria-live="polite">
+      <div class="result-top">
+        <div><div class="section-kicker">CHECK RESULT</div><h2>Connection summary</h2></div>
+        <span class="status-pill status-{{ result.status }}"><span class="status-dot"></span>{{ result.status|upper }}</span>
+      </div>
+      <div class="result-grid">
+        <div class="result-main">
+          <div class="result-icon result-icon-{{ result.status }}">
+            {% if result.status == 'open' %}<svg viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></svg>
+            {% elif result.status == 'closed' %}<svg viewBox="0 0 24 24"><path d="m7 7 10 10M17 7 7 17"/></svg>
+            {% else %}<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5m0 4h.01"/></svg>{% endif %}
+          </div>
+          <div><h3>{{ result.label }}</h3><p>{{ result.detail }}</p></div>
+        </div>
+        <div class="metric"><span>TARGET</span><strong>{{ result.host }}</strong><small>Destination host</small></div>
+        <div class="metric"><span>PORT</span><strong>{{ result.port }}</strong><small>{{ result.service }}</small></div>
+        <div class="metric"><span>RESPONSE TIME</span><strong>{% if result.latency is not none %}{{ result.latency }}<em> ms</em>{% else %}—{% endif %}</strong><small>TCP connection attempt</small></div>
+      </div>
+      <div class="result-note"><span>ⓘ</span><p>This is a basic TCP connectivity test, not a vulnerability scan. “Open” means a TCP connection was accepted from the server running this app.</p></div>
+    </section>
+    {% endif %}
+
+    <section class="ports-section">
+      <div class="ports-heading"><div><div class="section-kicker">REFERENCE</div><h2>Popular ports</h2></div><span class="ports-caption">Tap a port to prefill it</span></div>
+      <div class="port-chips">
+        <button type="button" class="port-chip" data-port="22"><span class="chip-number">22</span><span>SSH</span><span class="chip-arrow">↗</span></button>
+        <button type="button" class="port-chip" data-port="53"><span class="chip-number">53</span><span>DNS</span><span class="chip-arrow">↗</span></button>
+        <button type="button" class="port-chip" data-port="80"><span class="chip-number">80</span><span>HTTP</span><span class="chip-arrow">↗</span></button>
+        <button type="button" class="port-chip" data-port="443"><span class="chip-number">443</span><span>HTTPS</span><span class="chip-arrow">↗</span></button>
+        <button type="button" class="port-chip" data-port="3306"><span class="chip-number">3306</span><span>MySQL</span><span class="chip-arrow">↗</span></button>
+        <button type="button" class="port-chip" data-port="5432"><span class="chip-number">5432</span><span>PostgreSQL</span><span class="chip-arrow">↗</span></button>
+      </div>
+    </section>
+    <footer><div class="footer-brand">PortScope<span>®</span></div><p>Made for practical network troubleshooting.</p><span class="footer-status"><span class="live-dot"></span> TCP CHECKER</span></footer>
+  </main>
+  <script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>
